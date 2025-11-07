@@ -3,4 +3,6 @@
 
 Kodi kiegészítő a Filmy-hez
 
+1.0.1 - Oldal változás lekövetése
+
 1.0.0 - Első verzió
