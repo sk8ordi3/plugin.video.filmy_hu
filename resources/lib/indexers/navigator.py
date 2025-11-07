@@ -27,6 +27,7 @@ from resources.lib.modules.utils import py2_decode, py2_encode
 from resources.lib.modules import xmltodict
 
 from urllib.parse import urljoin, urlparse, parse_qs
+from typing import List, Dict, Set, Optional, Tuple
 import struct
 import random
 import string
@@ -37,11 +38,11 @@ addonFanart = xbmcaddon.Addon().getAddonInfo('fanart')
 
 version = xbmcaddon.Addon().getAddonInfo('version')
 kodi_version = xbmc.getInfoLabel('System.BuildVersion')
-base_log_info = f'filmy.hu | v{version} | Kodi: {kodi_version[:5]}'
+base_log_info = f'filmi.hu | v{version} | Kodi: {kodi_version[:5]}'
 
 xbmc.log(f'{base_log_info}', xbmc.LOGINFO)
 
-base_url = 'https://filmy.hu'
+base_url = 'https://filmi.hu'
 
 headers = {
     'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
@@ -82,59 +83,59 @@ class navigator:
           "categorys": [
             {
               "genre": "akció",
-              "url": "https://filmy.hu/category/28"
+              "url": "https://filmi.hu/category/28"
             },
             {
               "genre": "thriller",
-              "url": "https://filmy.hu/category/37"
+              "url": "https://filmi.hu/category/37"
             },
             {
               "genre": "horror",
-              "url": "https://filmy.hu/category/32"
+              "url": "https://filmi.hu/category/32"
             },
             {
               "genre": "vígjáték",
-              "url": "https://filmy.hu/category/27"
+              "url": "https://filmi.hu/category/27"
             },
             {
               "genre": "kaland",
-              "url": "https://filmy.hu/category/29"
+              "url": "https://filmi.hu/category/29"
             },
             {
               "genre": "családi",
-              "url": "https://filmy.hu/category/38"
+              "url": "https://filmi.hu/category/38"
             },
             {
               "genre": "animáció",
-              "url": "https://filmy.hu/category/39"
+              "url": "https://filmi.hu/category/39"
             },
             {
               "genre": "dráma",
-              "url": "https://filmy.hu/category/36"
+              "url": "https://filmi.hu/category/36"
             },
             {
               "genre": "misztikus",
-              "url": "https://filmy.hu/category/42"
+              "url": "https://filmi.hu/category/42"
             },
             {
               "genre": "anime",
-              "url": "https://filmy.hu/category/48"
+              "url": "https://filmi.hu/category/48"
             },
             {
               "genre": "zene",
-              "url": "https://filmy.hu/category/44"
+              "url": "https://filmi.hu/category/44"
             },
             {
               "genre": "feliratos",
-              "url": "https://filmy.hu/category/55"
+              "url": "https://filmi.hu/category/55"
             },
             {
               "genre": "sci-fi",
-              "url": "https://filmy.hu/category/33"
+              "url": "https://filmi.hu/category/33"
             },
             {
               "genre": "fantasy",
-              "url": "https://filmy.hu/category/43"
+              "url": "https://filmi.hu/category/43"
             }
           ]
         }
@@ -145,7 +146,7 @@ class navigator:
             
             self.addDirectoryItem(f"{category_name}", f'get_items&url={category_url}', '', 'DefaultFolder.png')
         
-        self.endDirectory('movies')
+        self.endDirectory('series')
 
     def getYears(self, url):
         from datetime import datetime
@@ -156,7 +157,7 @@ class navigator:
         for year_nums in years:
             self.addDirectoryItem(f"{year_nums}", f'get_items&url={base_url}/videos/{year_nums}', '', 'DefaultFolder.png')
 
-        self.endDirectory('movies')
+        self.endDirectory('series')
 
     def getItems(self, url, img_url, hun_title, year, card_type, imdb):
         try:
@@ -188,14 +189,14 @@ class navigator:
                 
                 
                 if card_type == 'Sorozat':
-                    self.addDirectoryItem(f'[B] {card_type} | {hun_title}| [COLOR yellow]{imdb}[/COLOR][/B]', f'extract_seasons&url={card_link}&img_url={img_url}&hun_title={hun_title}&year={year}&card_type={card_type}&imdb={imdb}', img_url, 'DefaultMovies.png', isFolder=True, meta={'title': hun_title})
+                    self.addDirectoryItem(f'[B] {card_type} | {hun_title} | [COLOR yellow]{imdb}[/COLOR][/B]', f'extract_seasons&url={card_link}&img_url={img_url}&hun_title={hun_title}&year={year}&card_type={card_type}&imdb={imdb}', img_url, 'DefaultMovies.png', isFolder=True, meta={'title': hun_title})
                 
                 else:
-                    self.addDirectoryItem(f'[B] {card_type} | {hun_title}| [COLOR yellow]{imdb}[/COLOR][/B]', f'extract_movie&url={card_link}&img_url={img_url}&hun_title={hun_title}&year={year}&card_type={card_type}&imdb={imdb}', img_url, 'DefaultMovies.png', isFolder=True, meta={'title': hun_title})
+                    self.addDirectoryItem(f'[B] {card_type} | {hun_title} | [COLOR yellow]{imdb}[/COLOR][/B]', f'extract_movie&url={card_link}&img_url={img_url}&hun_title={hun_title}&year={year}&card_type={card_type}&imdb={imdb}', img_url, 'DefaultMovies.png', isFolder=True, meta={'title': hun_title})
         except AttributeError:
             xbmc.log(f'{base_log_info}| getItems | nincs találat', xbmc.LOGINFO)
             notification = xbmcgui.Dialog()
-            notification.notification("filmy.hu", "nincs találat", time=5000)            
+            notification.notification("filmi.hu", "nincs találat", time=5000)            
         
         
         try:
@@ -225,68 +226,147 @@ class navigator:
         except AttributeError:
             xbmc.log(f'{base_log_info}| getItems | next_page_link | csak egy oldal található', xbmc.LOGINFO)
         
-        self.endDirectory('movies')
+        self.endDirectory('series')
 
     def extractMovie(self, url, img_url, hun_title, year, card_type, imdb):
         html_soup_2 = requests.get(url, headers=headers)
         soup_2 = BeautifulSoup(html_soup_2.text, 'html.parser')
         
-        content = soup_2.find('p', class_='mt-2 mb-5 col-12').get_text(strip=True)        
-        
+        content = soup_2.find('p', class_='mt-2 mb-5 col-12').get_text(strip=True)
         iframe = soup_2.find('iframe')
+
+        iframe_src = None
+        
         if iframe:
             iframe_src = iframe.get('src')
-        
+            if not iframe_src: 
+                iframe_src = iframe.get('data-src')
             if iframe_src and not iframe_src.startswith('https://'):
                 iframe_src = 'https:' + iframe_src
+        if iframe_src:
+            self.addDirectoryItem(f'[B]{hun_title} - {year} | [COLOR yellow]{imdb}[/COLOR][/B]', f'playmovie&url={quote_plus(iframe_src)}&img_url={img_url}&hun_title={hun_title}&year={year}', img_url, 'DefaultMovies.png', isFolder=False, meta={'title': hun_title, 'plot': content})
         
-            self.addDirectoryItem(f'[B]{hun_title} - {year}| [COLOR yellow]{imdb}[/COLOR][/B]', f'playmovie&url={quote_plus(iframe_src)}&img_url={img_url}&hun_title={hun_title}&year={year}', img_url, 'DefaultMovies.png', isFolder=False, meta={'title': hun_title, 'plot': content})
-        
-        self.endDirectory('movies')
+        self.endDirectory('series')
 
     def extractSeasons(self, url, img_url, hun_title, year, card_type, imdb, season_title, content):
-        html_soup_2 = requests.get(url, headers=headers)
-        soup = BeautifulSoup(html_soup_2.text, 'html.parser')
+        episodes_list: List[Dict[str, str]] = []
+        video_id_set: Set[str] = set()
+        season_paths_to_check: Set[str] = set()
         
-        content = soup.find('p', class_='mt-2 mb-5 col-12').get_text(strip=True)
-        season_section = soup.find('div', string='Évad:').find_parent('div')
-        season_links = season_section.find_all('a')
-        
-        for season in season_links:
-            season_title = season['title']
-            season_link = ''+base_url+'' + season['href']
+        video_path_regex = re.compile(r'/video/(\d+)')
+        season_episode_regex = re.compile(r'(\d+)\.évad.*?(\d+)\.rész', re.IGNORECASE | re.DOTALL)
+
+        def extract_sorting_key(item: Tuple[int, Dict[str, str]]) -> Tuple[int, int, int]:
+            original_index, episode = item
+            title = episode['title']
+
+            match = season_episode_regex.search(title)
             
-            self.addDirectoryItem(f'[B]{season_title}| [COLOR yellow]{imdb}[/COLOR][/B]', f'extract_episodes&url={quote_plus(season_link)}&img_url={img_url}&hun_title={hun_title}&year={year}&card_type={card_type}&imdb={imdb}&season_title={season_title}&content={content}', img_url, 'DefaultMovies.png', isFolder=True, meta={'title': hun_title, 'plot': content})
-
-        self.endDirectory('movies')
-
-    def extractEpisodes(self, url, img_url, hun_title, year, card_type, imdb, season_title, content, ep_title):
-        html_soup_2 = requests.get(url, headers=headers)
-        soup_2 = BeautifulSoup(html_soup_2.text, 'html.parser')
-
-        episodes_section = soup_2.find('div', string='Rész:').find_parent('div')
-        episodes_links = episodes_section.find_all('a')
+            if match:
+                try:
+                    season_number = int(match.group(1))
+                    episode_number = int(match.group(2))
+                    return season_number, episode_number, original_index
+                except ValueError:
+                    pass
+                    
+            MAX_SORT_VALUE = 9999 
+            return MAX_SORT_VALUE, MAX_SORT_VALUE, original_index
         
-        for episodes in episodes_links:
-            ep_title = episodes['title']
-            episode_link = ''+base_url+'' + episodes['href']
+        try:
+            response = requests.get(url, headers=headers, timeout=60)
+            response.raise_for_status()
+            response.encoding = 'utf-8' 
             
-            self.addDirectoryItem(f'[B]{ep_title}[/B]', f'ext_ep_video_link&url={quote_plus(episode_link)}&img_url={img_url}&hun_title={hun_title}&year={year}&card_type={card_type}&imdb={imdb}&season_title={season_title}&content={content}&ep_title={ep_title}', img_url, 'DefaultMovies.png', isFolder=True, meta={'title': ep_title, 'plot': content})
+            soup = BeautifulSoup(response.text, 'html.parser')
+            content = soup.find('p', class_='mt-2 mb-5 col-12').get_text(strip=True)
+            season_container = soup.select_one('.row.movie-datas .col-12 .col-12.pt-3.pb-2')
+            
+            if season_container:
+                season_links = season_container.find_all('a', href=video_path_regex)
+                for link in season_links:
+                    href = link.get('href')
+                    if href:
+                        season_paths_to_check.add(href)
+                
+            if not season_paths_to_check:
+                path_match = video_path_regex.search(url)
+                if path_match:
+                    season_paths_to_check.add(path_match.group(0))
+        
+        except requests.exceptions.RequestException as e:
+            xbmc.log(f'{base_log_info}| extractSeasons | Initial request error: {e}', xbmc.LOGERROR)
+            pass
+        
+        if season_paths_to_check:
+            for season_path in season_paths_to_check:
+                full_season_url = f"{base_url}{season_path}"
+        
+                try:
+                    season_response = requests.get(full_season_url, headers=headers, timeout=60)
+                    season_response.raise_for_status()
+                    season_response.encoding = 'utf-8'
+                    
+                    season_soup = BeautifulSoup(season_response.text, 'html.parser')
+                    episode_container = season_soup.select_one('.row.movie-datas .col-12 .col-12.py-2')
+                    
+                    if episode_container:
+                        episode_links = episode_container.find_all('a', href=video_path_regex)
+                        
+                        for link in episode_links:
+                            href = link.get('href')
+                            title = link.get('title')
+                            
+                            video_id_match = video_path_regex.search(href)
+                            video_id = video_id_match.group(1) if video_id_match else None
+
+                            if video_id and video_id not in video_id_set and href and title:
+                                video_id_set.add(video_id)
+                                episodes_list.append({
+                                    "title": title,
+                                    "link": f"{base_url}{href}"
+                                })
+                
+                except requests.exceptions.RequestException as e:
+                    xbmc.log(f'{base_log_info}| extractSeasons | Season request error for {full_season_url}: {e}', xbmc.LOGERROR)
+                    continue
+        
+        indexed_episodes: List[Tuple[int, Dict[str, str]]] = [
+            (i, episode) for i, episode in enumerate(episodes_list)
+        ]
+        
+        sorted_indexed_episodes = sorted(
+            indexed_episodes, 
+            key=extract_sorting_key
+        )
+        
+        sorted_episodes = [episode for index, episode in sorted_indexed_episodes]
+
+        for stuffs in sorted_episodes:
+            season_ep_link = stuffs['link']
+            hun_title = stuffs['title'] 
+            
+            self.addDirectoryItem(f'[B]{hun_title} | [COLOR yellow]{imdb}[/COLOR][/B]', f'ext_ep_video_link&url={quote_plus(season_ep_link)}&img_url={img_url}&hun_title={hun_title}&year={year}&card_type={card_type}&imdb={imdb}&season_title={season_title}&content={content}', img_url, 'DefaultMovies.png', isFolder=True, meta={'title': hun_title, 'plot': content})
 
         self.endDirectory('series')
 
-    def extEpVid(self, url, img_url, hun_title, year, card_type, imdb, season_title, content, ep_title):
+    def extEpVid(self, url, img_url, hun_title, year, card_type, imdb, season_title, content):
         html_soup_2 = requests.get(url, headers=headers)
         soup_2 = BeautifulSoup(html_soup_2.text, 'html.parser')
         
         iframe = soup_2.find('iframe')
+        iframe_src = None
+        
         if iframe:
             iframe_src = iframe.get('src')
-        
+            if not iframe_src: 
+                iframe_src = iframe.get('data-src')
+            
             if iframe_src and not iframe_src.startswith('https://'):
                 iframe_src = 'https:' + iframe_src
 
-            self.addDirectoryItem(f'[B]{ep_title} - {hun_title}| [COLOR yellow]{imdb}[/COLOR][/B]', f'playmovie&url={quote_plus(iframe_src)}&img_url={img_url}&hun_title={hun_title}&year={year}&card_type={card_type}&imdb={imdb}&season_title={season_title}&content={content}&ep_title={ep_title}', img_url, 'DefaultMovies.png', isFolder=False, meta={'title': ep_title, 'plot': content})
+        if iframe_src:
+            self.addDirectoryItem(f'[B]{hun_title} | [COLOR yellow]{imdb}[/COLOR][/B]', f'playmovie&url={quote_plus(iframe_src)}&img_url={img_url}&hun_title={hun_title}&year={year}&card_type={card_type}&imdb={imdb}&season_title={season_title}&content={content}', img_url, 'DefaultMovies.png', isFolder=False, meta={'title': hun_title, 'plot': content})
 
         self.endDirectory('series')
 
@@ -411,7 +491,7 @@ class navigator:
             except Exception as e:
                 xbmc.log(f'{base_log_info}| playMovie | Error: {str(e)}', xbmc.LOGINFO)
                 notification = xbmcgui.Dialog()
-                notification.notification("filmy.hu", "Törölt tartalom", time=5000)            
+                notification.notification("filmi.hu", "Törölt tartalom", time=5000)            
             ###
         
         else:
@@ -424,7 +504,7 @@ class navigator:
             except:
                 xbmc.log(f'{base_log_info}| playMovie | name: No video sources found', xbmc.LOGINFO)
                 notification = xbmcgui.Dialog()
-                notification.notification("filmy.hu", "Törölt tartalom", time=5000)
+                notification.notification("filmi.hu", "Törölt tartalom", time=5000)
 
     def doSearch(self):
         search_text = self.getSearchText()
